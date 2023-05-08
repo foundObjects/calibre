@@ -7,7 +7,7 @@ import os
 import re
 import sys
 import time
-import traceback
+import stackprinter
 from qt.core import QCoreApplication, QIcon, QObject, QTimer
 
 from calibre import force_unicode, prints
@@ -126,8 +126,8 @@ def init_qt(args):
     try:
         is_x11 = app.platformName() == 'xcb'
     except Exception:
-        import traceback
-        traceback.print_exc()
+        import stackprinter
+        stackprinter.show()
         is_x11 = False
     # Ancient broken VNC servers cannot handle icons of size greater than 256
     # https://www.mobileread.com/forums/showthread.php?t=278447
@@ -185,7 +185,7 @@ def get_library_path(gui_runner):
             gui_runner.show_error(_('Failed to create library'),
                     _('Failed to create calibre library at: %r.\n'
                       'You will be asked to choose a new library location.')%library_path,
-                    det_msg=traceback.format_exc())
+                    det_msg=stackprinter.format())
             library_path = gui_runner.choose_dir(get_default_library_path())
     return library_path
 
@@ -214,7 +214,7 @@ def windows_repair(library_path=None):
         except Exception:
             done = False
             error_dialog(None, _('Failed to repair library'), _(
-                'Could not repair library. Click "Show details" for more information.'), det_msg=traceback.format_exc(), show=True)
+                'Could not repair library. Click "Show details" for more information.'), det_msg=stackprinter.format(), show=True)
         if done:
             subprocess.Popen([sys.executable])
         app.quit()
@@ -308,7 +308,7 @@ class GuiRunner(QObject):
             except:
                 self.show_error(_('Bad database location'), _(
                     'Bad database location %r. calibre will now quit.')%self.library_path,
-                    det_msg=traceback.format_exc())
+                    det_msg=stackprinter.format())
                 self.initialization_failed()
 
         self.timed_print('db initialized')
@@ -316,7 +316,7 @@ class GuiRunner(QObject):
             self.start_gui(db)
         except Exception:
             try:
-                details = traceback.format_exc()
+                details = stackprinter.format()
             except Exception:
                 details = ''
             self.show_error(_('Startup error'), _(
@@ -338,7 +338,7 @@ class GuiRunner(QObject):
                         'The rebuild may not be completely successful. '
                         'If you say No, a new empty calibre library will be created.')
                         % force_unicode(self.library_path, filesystem_encoding),
-                        det_msg=traceback.format_exc()
+                        det_msg=stackprinter.format()
                         )
             if repair:
                 if iswindows:
@@ -354,7 +354,7 @@ class GuiRunner(QObject):
             self.show_error(_('Bad database location'),
                     _('Bad database location %r. Will start with '
                     ' a new, empty calibre library')%self.library_path,
-                    det_msg=traceback.format_exc())
+                    det_msg=stackprinter.format())
 
         self.initialize_db_stage2(db, None)
 
@@ -576,14 +576,14 @@ if __name__ == '__main__':
     except Exception as err:
         if not iswindows:
             raise
-        tb = traceback.format_exc()
+        tb = stackprinter.format()
         from qt.core import QErrorMessage
         logfile = os.path.join(os.path.expanduser('~'), 'calibre.log')
         if os.path.exists(logfile):
             with open(logfile) as f:
                 log = f.read().decode('utf-8', 'ignore')
             d = QErrorMessage()
-            d.showMessage(('<b>Error:</b>%s<br><b>Traceback:</b><br>'
+            d.showMessage(('<b>Error:</b>%s<br><b>Stack Trace:</b><br>'
                 '%s<b>Log:</b><br>%s')%(str(err),
                     str(tb).replace('\n', '<br>'),
                     log.replace('\n', '<br>')))

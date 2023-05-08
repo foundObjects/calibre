@@ -1041,12 +1041,12 @@ def setup_gui_option_parser(parser):
 
 
 def show_temp_dir_error(err):
-    import traceback
+    import stackprinter
     extra = _('Click "Show details" for more information.')
     if 'CALIBRE_TEMP_DIR' in os.environ:
         extra = _('The %s environment variable is set. Try unsetting it.') % 'CALIBRE_TEMP_DIR'
     error_dialog(None, _('Could not create temporary folder'), _(
-        'Could not create temporary folder, calibre cannot start.') + ' ' + extra, det_msg=traceback.format_exc(), show=True)
+        'Could not create temporary folder, calibre cannot start.') + ' ' + extra, det_msg=stackprinter.format(), show=True)
 
 
 def setup_unix_signals(self):
@@ -1263,8 +1263,8 @@ class Application(QApplication):
                 import ctypes
                 ctypes.WinDLL('ole32.dll').OleFlushClipboard()
         except Exception:
-            import traceback
-            traceback.print_exc()
+            import stackprinter
+            stackprinter.show()
 
     def load_builtin_fonts(self, scan_for_fonts=False):
         if scan_for_fonts:
@@ -1492,7 +1492,7 @@ def ensure_app(headless=True):
             set_image_allocation_limit()
             if headless and has_headless:
                 _store_app.headless = True
-            import traceback
+            import stackprinter
 
             # This is needed because as of PyQt 5.4 if sys.execpthook ==
             # sys.__excepthook__ PyQt will abort the application on an
@@ -1503,12 +1503,13 @@ def ensure_app(headless=True):
             # unhandled exceptions ever occur. All the actual GUI apps already
             # override sys.except_hook with a proper error handler.
 
-            def eh(t, v, tb):
-                try:
-                    traceback.print_exception(t, v, tb, file=sys.stderr)
-                except:
-                    pass
-            sys.excepthook = eh
+            # def eh(t, v, tb):
+            #     try:
+            #         traceback.print_exception(t, v, tb, file=sys.stderr)
+            #     except:
+            #         pass
+            # sys.excepthook = eh
+            stackprinter.set_excepthook(style='plaintext',file=sys.stderr)
     return _store_app
 
 

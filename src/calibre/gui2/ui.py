@@ -140,9 +140,9 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 ac = self.init_iaction(action)
             except Exception:
                 # Ignore errors in loading user supplied plugins
-                import traceback
+                import stackprinter
                 try:
-                    traceback.print_exc()
+                    stackprinter.show()
                 except Exception:
                     if action.plugin_path:
                         print('Failed to load Interface Action plugin:', action.plugin_path, file=sys.stderr)
@@ -182,8 +182,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 self.add_istore(st)
             except:
                 # Ignore errors in loading user supplied plugins
-                import traceback
-                traceback.print_exc()
+                import stackprinter
+                stackprinter.show()
                 if store.installation_type is PluginInstallationType.BUILTIN:
                     raise
                 continue
@@ -229,8 +229,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 ac.do_genesis()
             except Exception:
                 # Ignore errors in third party plugins
-                import traceback
-                traceback.print_exc()
+                import stackprinter
+                stackprinter.show()
                 if getattr(ac, 'installation_type', None) is PluginInstallationType.BUILTIN:
                     raise
         self.donate_action = QAction(QIcon.ic('donate.png'),
@@ -349,8 +349,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             try:
                 add_quick_start_guide(self.library_view)
             except:
-                import traceback
-                traceback.print_exc()
+                import stackprinter
+                stackprinter.show()
         for view in ('library', 'memory', 'card_a', 'card_b'):
             v = getattr(self, '%s_view' % view)
             v.selectionModel().selectionChanged.connect(self.update_status_bar)
@@ -384,8 +384,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             try:
                 ac.gui_layout_complete()
             except:
-                import traceback
-                traceback.print_exc()
+                import stackprinter
+                stackprinter.show()
                 if ac.installation_type is PluginInstallationType.BUILTIN:
                     raise
 
@@ -404,8 +404,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             try:
                 ac.initialization_complete()
             except:
-                import traceback
-                traceback.print_exc()
+                import stackprinter
+                stackprinter.show()
                 if ac.installation_type is PluginInstallationType.BUILTIN:
                     raise
         self.set_current_library_information(current_library_name(), db.library_id,
@@ -484,8 +484,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             except:
                 message = 'start smartdevice unknown exception'
                 prints(message)
-                import traceback
-                traceback.print_exc()
+                import stackprinter
+                stackprinter.show()
         if message:
             if not self.device_manager.is_running('Wireless Devices'):
                 error_dialog(self, _('Problem starting the wireless device'),
@@ -831,8 +831,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                     m.refresh_ids((book_id,))
                     db.event_dispatcher(db.EventType.book_edited, book_id, fmt)
             except Exception:
-                import traceback
-                traceback.print_exc()
+                import stackprinter
+                stackprinter.show()
         elif msg.startswith('web-store:'):
             import json
             try:
@@ -891,13 +891,13 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 except apsw.Error:
                     if not allow_rebuild:
                         raise
-                    import traceback
+                    import stackprinter
                     repair = question_dialog(self, _('Corrupted database'),
                             _('The library database at %s appears to be corrupted. Do '
                             'you want calibre to try and rebuild it automatically? '
                             'The rebuild may not be completely successful.')
                             % force_unicode(newloc, filesystem_encoding),
-                            det_msg=traceback.format_exc()
+                            det_msg=stackprinter.format()
                             )
                     if repair:
                         from calibre.gui2.dialogs.restore_library import (
@@ -913,8 +913,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 try:
                     action.library_about_to_change(olddb, db)
                 except Exception:
-                    import traceback
-                    traceback.print_exc()
+                    import stackprinter
+                    stackprinter.show()
             self.library_path = newloc
             self.extra_files_watcher.clear()
             prefs['library_path'] = self.library_path
@@ -939,8 +939,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 try:
                     action.library_changed(db)
                 except Exception:
-                    import traceback
-                    traceback.print_exc()
+                    import stackprinter
+                    stackprinter.show()
             self.library_broker.gui_library_changed(db, olddb)
             if self.device_connected:
                 self.set_books_in_library(self.booklists(), reset=True)
@@ -1113,8 +1113,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         try:
             self.shutdown()
         except:
-            import traceback
-            traceback.print_exc()
+            import stackprinter
+            stackprinter.show()
         self.restart_after_quit = restart
         self.debug_on_restart = debug_on_restart
         self.no_plugins_on_restart = no_plugins_on_restart
@@ -1190,14 +1190,15 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         # Do not report any errors that happen after the shutdown
         # We cannot restore the original excepthook as that causes PyQt to
         # call abort() on unhandled exceptions
-        import traceback
+        import stackprinter
 
-        def eh(t, v, tb):
-            try:
-                traceback.print_exception(t, v, tb, file=sys.stderr)
-            except:
-                pass
-        sys.excepthook = eh
+        # def eh(t, v, tb):
+        #     try:
+        #         traceback.print_exception(t, v, tb, file=sys.stderr)
+        #     except:
+        #         pass
+        # sys.excepthook = eh
+        stackprinter.set_excepthook(style='plaintext',file=sys.stderr)
 
         mb = self.library_view.model().metadata_backup
         if mb is not None:
@@ -1262,8 +1263,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 try:
                     self.shutdown(write_settings=False)
                 except:
-                    import traceback
-                    traceback.print_exc()
+                    import stackprinter
+                    stackprinter.show()
                 e.accept()
             else:
                 e.ignore()

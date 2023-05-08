@@ -257,8 +257,8 @@ def get_parsed_proxy(typ='http', debug=True):
                     ans['port'] = int(ans['port'])
             except:
                 if debug:
-                    import traceback
-                    traceback.print_exc()
+                    import stackprinter
+                    stackprinter.show()
             else:
                 if debug:
                     prints('Using http proxy', str(ans))
@@ -589,5 +589,5 @@ def fsync(fileobj):
         try:
             os.utime(fileobj.name, None)
         except Exception:
-            import traceback
-            traceback.print_exc()
+            import stackprinter
+            stackprinter.show()
